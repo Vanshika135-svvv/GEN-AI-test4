@@ -2,3 +2,4 @@ data/
 evaluation/
 venv/
 *.pth
+__pycache__/
