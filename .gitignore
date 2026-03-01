@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Data & Large Files
+data/
+evaluation/
+*.pth
+*.png
+*.jpg
+
+# Environments
+venv/
+.env
