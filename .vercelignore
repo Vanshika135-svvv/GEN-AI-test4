@@ -1,4 +1,6 @@
 data/
 evaluation/
 venv/
+.venv/
 __pycache__/
+*.pth
