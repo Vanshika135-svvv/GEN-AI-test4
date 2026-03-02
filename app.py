@@ -1,43 +1,25 @@
 from flask import Flask, request, jsonify, render_template
-import onnxruntime as ort
-import numpy as np
+import torch
 import base64
 from io import BytesIO
 from PIL import Image
+import torchvision.transforms as T
 import os
+from models.generator import Generator
 
 app = Flask(__name__)
 
-# Use model.onnx instead of gen.pth for lightweight deployment
-MODEL_PATH = "model.onnx"
+# Check if model exists before starting
+MODEL_PATH = "gen.pth"
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = Generator().to(device)
 
-# Initialize ONNX session
 if os.path.exists(MODEL_PATH):
-    # Vercel uses CPU, so we don't need to specify a device
-    session = ort.InferenceSession(MODEL_PATH)
-    print("ONNX Model loaded successfully!")
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
+    model.eval()
+    print("Model loaded successfully!")
 else:
-    session = None
-    print("WARNING: model.onnx not found. Run conversion script first.")
-
-def preprocess(img):
-    """Manually perform the T.Compose transforms using PIL and Numpy"""
-    img = img.resize((256, 256))
-    img_data = np.array(img).astype(np.float32) / 255.0
-    # Normalize (0.5 mean, 0.5 std) -> (x - 0.5) / 0.5
-    img_data = (img_data - 0.5) / 0.5
-    # Change from HWC to CHW (Channels first)
-    img_data = np.transpose(img_data, (2, 0, 1))
-    return np.expand_dims(img_data, axis=0)
-
-def postprocess(output_tensor):
-    """Convert model output back to a displayable image"""
-    # Denormalize: (x * 0.5) + 0.5
-    output = (output_tensor.squeeze(0) * 0.5 + 0.5) * 255.0
-    output = np.clip(output, 0, 255).astype(np.uint8)
-    # Change from CHW back to HWC
-    output = np.transpose(output, (1, 2, 0))
-    return Image.fromarray(output)
+    print("WARNING: gen.pth not found. Please run train.py first.")
 
 @app.route('/')
 def index():
@@ -45,26 +27,21 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if session is None:
-        return jsonify({"error": "Model not loaded"}), 500
+    if not os.path.exists(MODEL_PATH):
+        return jsonify({"error": "Model not trained yet"}), 500
         
     file = request.files['file']
     img = Image.open(file.stream).convert("RGB")
     
-    # 1. Preprocess
-    input_data = preprocess(img)
+    transform = T.Compose([T.Resize((256, 256)), T.ToTensor(), T.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))])
+    input_tensor = transform(img).unsqueeze(0).to(device)
 
-    # 2. Run Inference with ONNX
-    input_name = session.get_inputs()[0].name
-    output_name = session.get_outputs()[0].name
-    raw_output = session.run([output_name], {input_name: input_data})[0]
+    with torch.no_grad():
+        output = model(input_tensor)
+        output = output * 0.5 + 0.5 
 
-    # 3. Postprocess
-    res_img = postprocess(raw_output)
-
-    # 4. Encode to Base64
     buffered = BytesIO()
-    res_img.save(buffered, format="PNG")
+    T.ToPILImage()(output.squeeze(0).cpu()).save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue()).decode()
 
     return jsonify({"image": img_str})
