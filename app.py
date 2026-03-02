@@ -15,7 +15,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 model = Generator().to(device)
 
 if os.path.exists(MODEL_PATH):
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=device, weights_only=False))
     model.eval()
     print("Model loaded successfully!")
 else:
