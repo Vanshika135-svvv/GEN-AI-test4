@@ -7,8 +7,7 @@ class Pix2PixDataset(Dataset):
     def __init__(self, root_dir):
         self.root_dir = root_dir
         # This line now filters out folders and only keeps image files
-        self.files = [f for f in os.listdir(root_dir) 
-                      if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        self.files = [f for f in os.listdir(root_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
         
         self.transform = T.Compose([
             T.Resize((256, 512)),

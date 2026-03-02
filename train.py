@@ -27,7 +27,7 @@ def train_fn():
     L1_LOSS = nn.L1Loss()
 
     # 3. Data
-    train_dataset = Pix2PixDataset(root_dir="data/train")
+    train_dataset = Pix2PixDataset(root_dir="data/train/train")
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
     # 4. Loop
