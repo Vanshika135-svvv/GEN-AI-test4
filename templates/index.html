@@ -3,96 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pix2Pix cGAN | Task-04</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>AI Sketch-to-Photo | Task 4</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <div class="brutalist-container">
+    <div class="container">
         <header>
-            <div class="header-content">
-                <h1>GAN_TRANSLATOR.v4</h1>
-                <span class="tag">PRODIGY INFOTECH // TASK-04</span>
-            </div>
+            <h1>GEN-AI <span>Task 04</span></h1>
+            <p>Transforming Sketches into High-Fidelity Imagery via Pix2Pix GAN</p>
         </header>
 
-        <main>
-            <section class="control-panel">
-                <div class="card">
-                    <div class="card-header">1. SOURCE_INPUT</div>
-                    <div class="card-body">
-                        <div class="drop-zone" id="dropZone">
-                            <p id="fileNameDisplay">CLICK OR DRAG IMAGE HERE</p>
-                            <input type="file" id="fileInput" hidden accept="image/*">
-                        </div>
-                        <button class="action-btn" id="generateBtn">
-                            START TRANSLATION
-                        </button>
-                    </div>
-                </div>
-
-                <div class="card" id="outputCard">
-                    <div class="card-header">2. GENERATED_OUTPUT</div>
-                    <div class="card-body result-container">
-                        <div id="loader" class="hidden">NEURAL_PROCESSING_IN_PROGRESS...</div>
-                        <img id="outputImg" src="" alt="Neural Network Output" class="hidden">
-                        <div id="placeholderText">IMAGE WILL APPEAR HERE</div>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <footer>
-            <div class="footer-bar">
-                GEN-AI MODULE // SYSTEM_STATUS: READY
+        <main class="card">
+            <div class="upload-section">
+                <input type="file" id="imageInput" accept="image/*" hidden>
+                <button class="btn primary" onclick="document.getElementById('imageInput').click()">Upload Sketch</button>
+                <button class="btn success" id="generateBtn">Generate Photo</button>
             </div>
-        </footer>
+
+            <div class="display-grid">
+                <div class="view-box">
+                    <h3>Input Sketch</h3>
+                    <div class="preview" id="inputPreview">
+                        <span>No image uploaded</span>
+                    </div>
+                </div>
+                <div class="view-box">
+                    <h3>AI Generation</h3>
+                    <div class="preview" id="outputPreview">
+                        <span>Waiting for input...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="loader" class="loader hidden">Processing with GPU...</div>
+        </main>
     </div>
 
     <script>
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
+        const imageInput = document.getElementById('imageInput');
         const generateBtn = document.getElementById('generateBtn');
-        const outputImg = document.getElementById('outputImg');
+        const inputPreview = document.getElementById('inputPreview');
+        const outputPreview = document.getElementById('outputPreview');
         const loader = document.getElementById('loader');
-        const placeholder = document.getElementById('placeholderText');
-        const fileNameDisplay = document.getElementById('fileNameDisplay');
 
-        dropZone.onclick = () => fileInput.click();
-
-        fileInput.onchange = (e) => {
-            if (e.target.files.length > 0) {
-                fileNameDisplay.innerText = e.target.files[0].name;
-                fileNameDisplay.style.color = "#00ff95";
+        imageInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    inputPreview.innerHTML = `<img src="${event.target.result}" alt="Input">`;
+                };
+                reader.readAsDataURL(file);
             }
         };
 
         generateBtn.onclick = async () => {
-            if (!fileInput.files[0]) return alert("Please select an image first.");
-
-            loader.classList.remove('hidden');
-            outputImg.classList.add('hidden');
-            placeholder.classList.add('hidden');
-            generateBtn.disabled = true;
-            generateBtn.innerText = "TRANSLATING...";
+            const file = imageInput.files[0];
+            if (!file) return alert("Please upload an image first!");
 
             const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
+            formData.append('file', file);
+
+            loader.classList.remove('hidden');
+            outputPreview.innerHTML = "";
 
             try {
                 const response = await fetch('/predict', { method: 'POST', body: formData });
                 const data = await response.json();
                 
                 if (data.image) {
-                    outputImg.src = `data:image/png;base64,${data.image}`;
-                    outputImg.classList.remove('hidden');
-                    loader.classList.add('hidden');
+                    outputPreview.innerHTML = `<img src="data:image/png;base64,${data.image}" alt="Output">`;
+                } else {
+                    alert("Error generating image.");
                 }
             } catch (err) {
-                alert("Translation failed. Check if your Flask server is running.");
+                console.error(err);
+                alert("Server Error. Ensure app.py is running.");
             } finally {
-                generateBtn.disabled = false;
-                generateBtn.innerText = "START TRANSLATION";
+                loader.classList.add('hidden');
             }
         };
     </script>
