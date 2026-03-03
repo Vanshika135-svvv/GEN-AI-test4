@@ -1,14 +1,21 @@
-# Python
+# Ignore local environment and cache
+venv/
 __pycache__/
-*.py[cod]
+.env
+.dist/
 
-# Data & Large Files
+# Ignore heavy training data and local evaluation previews
 data/
 evaluation/
-!gen.pth
-*.png
-*.jpg
 
-# Environments
-venv/
-.env
+# Ignore the old heavy PyTorch weights (6GB fix)
+gen.pth
+
+# ENSURE these are tracked and uploaded
+!model.onnx
+!model.onnx.data
+!app.py
+!requirements.txt
+!templates/
+!static/
+!models/

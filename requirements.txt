@@ -20,9 +20,14 @@
 # pillow
 # numpy
 
+# flask
+# torch
+# torchvision
+# pillow
+# numpy
+# tqdm
+
 flask
-torch
-torchvision
+onnxruntime
 pillow
 numpy
-tqdm
