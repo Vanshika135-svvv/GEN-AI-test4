@@ -3,78 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pix2Pix cGAN | Task-04</title>
+    <title>Forensic AI | Prodigy Task-04</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <div class="brutalist-container">
-        <header>
-            <div class="header-content">
-                <h1>GAN_TRANSLATOR.v4</h1>
-                <span class="tag">PRODIGY INFOTECH // TASK-04</span>
+    <nav class="navbar">
+        <div class="nav-content">
+            <span class="logo">FORENSIC<strong>AI</strong></span>
+            <div class="nav-links">
+                <a href="#translator">Investigation Hub</a>
+                <a href="#about">Case Context</a>
             </div>
-        </header>
+        </div>
+    </nav>
 
-        <main>
-            <section class="control-panel">
-                <div class="card">
-                    <div class="card-header">1. SOURCE_INPUT</div>
-                    <div class="card-body">
-                        <div class="drop-zone" id="dropZone">
-                            <p id="fileNameDisplay">CLICK OR DRAG IMAGE HERE</p>
-                            <input type="file" id="fileInput" hidden accept="image/*">
-                        </div>
-                        <button class="action-btn" id="generateBtn">
-                            START TRANSLATION
-                        </button>
+    <div class="hero" id="translator">
+        <div class="container">
+            <header class="main-header">
+                <div class="internship-badge">PRODIGY INFOTECH // INTERN_PROJECT_04</div>
+                <h1>Image-to-Image <span>Translation</span></h1>
+                <p>Harnessing Conditional GANs to transform forensic thermal sketches into photorealistic renders.</p>
+            </header>
+
+            <div class="grid-layout">
+                <div class="glass-card">
+                    <div class="card-label">01. THERMAL / INFRARED INPUT</div>
+                    <div class="drop-zone" id="dropZone">
+                        <div class="upload-icon">🔍</div>
+                        <p id="fileNameDisplay">UPLOAD HEAT SIGNATURE (256x256)</p>
+                        <input type="file" id="fileInput" hidden accept="image/*">
                     </div>
+                    <button class="btn-primary" id="generateBtn">ANALYZE HEATMAP</button>
                 </div>
 
-                <div class="card" id="outputCard">
-                    <div class="card-header">2. GENERATED_OUTPUT</div>
-                    <div class="card-body result-container">
-                        <div id="loader" class="hidden">NEURAL_PROCESSING_IN_PROGRESS...</div>
-                        <img id="outputImg" src="" alt="Neural Network Output" class="hidden">
-                        <div id="placeholderText">IMAGE WILL APPEAR HERE</div>
+                <div class="glass-card">
+                    <div class="card-label">02. RGB RECONSTRUCTION</div>
+                    <div class="output-box">
+                        <div id="loader" class="hidden">EXTRACTING PIXEL THERMALS...</div>
+                        <img id="outputImg" src="" alt="Forensic Output" class="hidden">
+                        <div id="placeholderText">AWAITING SCANNER DATA</div>
                     </div>
+                    <button class="btn-secondary hidden" id="downloadBtn">SAVE EVIDENCE PNG</button>
                 </div>
-            </section>
-        </main>
-
-        <footer>
-            <div class="footer-bar">
-                GEN-AI MODULE // SYSTEM_STATUS: READY
             </div>
-        </footer>
+        </div>
     </div>
+
+    <section class="about-section" id="about">
+        <div class="container">
+            <div class="info-grid">
+                <div class="info-item">
+                    <h3>The Investigation</h3>
+                    <p>This module uses Pix2Pix translation to map non-visible thermal data into a visible RGB spectrum. This allows investigators to see temperature gradients as distinct color ranges.</p>
+                </div>
+                <div class="info-item">
+                    <h3>Forensic Use Cases</h3>
+                    <p>Ideal for locating missing persons, detecting hidden devices behind walls, and identifying structural weaknesses in fire-damaged zones.</p>
+                </div>
+                <div class="info-item">
+                    <h3>Neural Mapping</h3>
+                    <p>By training the Generator on paired Thermal/RGB datasets, the AI predicts texture from heat intensity, providing a visual "Heat-to-Orange" mapping.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <script>
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const generateBtn = document.getElementById('generateBtn');
         const outputImg = document.getElementById('outputImg');
+        const downloadBtn = document.getElementById('downloadBtn');
         const loader = document.getElementById('loader');
         const placeholder = document.getElementById('placeholderText');
-        const fileNameDisplay = document.getElementById('fileNameDisplay');
 
         dropZone.onclick = () => fileInput.click();
 
         fileInput.onchange = (e) => {
             if (e.target.files.length > 0) {
-                fileNameDisplay.innerText = e.target.files[0].name;
-                fileNameDisplay.style.color = "#00ff95";
+                document.getElementById('fileNameDisplay').innerText = e.target.files[0].name;
             }
         };
 
         generateBtn.onclick = async () => {
-            if (!fileInput.files[0]) return alert("Please select an image first.");
+            if (!fileInput.files[0]) return alert("Please upload a thermal scan.");
 
             loader.classList.remove('hidden');
             outputImg.classList.add('hidden');
             placeholder.classList.add('hidden');
+            downloadBtn.classList.add('hidden');
             generateBtn.disabled = true;
-            generateBtn.innerText = "TRANSLATING...";
 
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
@@ -86,13 +105,20 @@
                 if (data.image) {
                     outputImg.src = `data:image/png;base64,${data.image}`;
                     outputImg.classList.remove('hidden');
-                    loader.classList.add('hidden');
+                    downloadBtn.classList.remove('hidden');
+                    
+                    downloadBtn.onclick = () => {
+                        const a = document.createElement("a");
+                        a.href = outputImg.src;
+                        a.download = "forensic_reconstruction.png";
+                        a.click();
+                    };
                 }
             } catch (err) {
-                alert("Translation failed. Check if your Flask server is running.");
+                alert("Neural link failed. Verify server status.");
             } finally {
+                loader.classList.add('hidden');
                 generateBtn.disabled = false;
-                generateBtn.innerText = "START TRANSLATION";
             }
         };
     </script>
