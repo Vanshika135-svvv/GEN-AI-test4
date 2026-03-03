@@ -5,31 +5,26 @@ import os
 import numpy as np
 from io import BytesIO
 from PIL import Image
-import torchvision.transforms as T
-import torch
 
 app = Flask(__name__)
-
-# Optimization for Vercel: Prevent thread contention
-torch.set_num_threads(1)
 
 # Point to your new lightweight model file
 MODEL_PATH = "model.onnx"
 
-# Initialize ONNX Runtime Session
+# Initialize ONNX Runtime Session with CPU optimization
 def load_onnx_model():
     if os.path.exists(MODEL_PATH):
         try:
-            print(f"Loading {MODEL_PATH}...")
-            return ort.InferenceSession(MODEL_PATH, providers=['CPUExecutionProvider'])
+            # Set session options to manage threads without needing torch
+            sess_options = ort.SessionOptions()
+            sess_options.intra_op_num_threads = 1
+            sess_options.inter_op_num_threads = 1
+            return ort.InferenceSession(MODEL_PATH, sess_options, providers=['CPUExecutionProvider'])
         except Exception as e:
             print(f"❌ Error loading ONNX model: {e}")
             return None
-    else:
-        print("⚠️ WARNING: model.onnx not found. Ensure it's in the root folder.")
-        return None
+    return None
 
-# Load the model once during startup
 ort_session = load_onnx_model()
 
 @app.route('/')
@@ -45,24 +40,22 @@ def predict():
         file = request.files['file']
         img = Image.open(file.stream).convert("RGB")
         
-        # 1. Preprocessing
-        transform = T.Compose([
-            T.Resize((256, 256)), 
-            T.ToTensor(), 
-            T.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))
-        ])
-        
-        # ONNX expects a NumPy array instead of a Torch Tensor
-        input_tensor = transform(img).unsqueeze(0).numpy()
+        # 1. Manual Preprocessing (Replacing torchvision)
+        img = img.resize((256, 256))
+        img_array = np.array(img).astype(np.float32) / 255.0
+        # Normalize to [-1, 1]
+        img_array = (img_array - 0.5) / 0.5
+        # Change format from (H, W, C) to (C, H, W) and add Batch dimension
+        input_tensor = np.transpose(img_array, (2, 0, 1))[np.newaxis, :]
 
-        # 2. Run Fast Inference (CPU Optimized)
+        # 2. Run Fast Inference
         outputs = ort_session.run(None, {'input': input_tensor})
         output = outputs[0]
         
         # 3. Post-processing: Denormalize back to [0, 1]
         output = (output * 0.5 + 0.5).clip(0, 1)
         
-        # Convert NumPy array to Image
+        # Convert NumPy array back to Image
         output_img_arr = (output.squeeze(0).transpose(1, 2, 0) * 255).astype(np.uint8)
         output_pil = Image.fromarray(output_img_arr)
 
@@ -74,9 +67,7 @@ def predict():
         return jsonify({"image": img_str})
     
     except Exception as e:
-        print(f"Prediction error: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Local test run
     app.run(debug=True, port=5000)
