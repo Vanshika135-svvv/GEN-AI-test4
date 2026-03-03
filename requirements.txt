@@ -12,10 +12,17 @@
 # pillow
 # numpy
 
---index-url https://download.pytorch.org/whl/cpu
+# --index-url https://download.pytorch.org/whl/cpu
+# flask
+# torch
+# torchvision
+# onnxruntime
+# pillow
+# numpy
+
 flask
 torch
 torchvision
-onnxruntime
 pillow
 numpy
+tqdm
