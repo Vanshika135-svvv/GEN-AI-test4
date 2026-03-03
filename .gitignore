@@ -5,7 +5,7 @@ __pycache__/
 # Data & Large Files
 data/
 evaluation/
-*.pth
+!gen.pth
 *.png
 *.jpg
 
