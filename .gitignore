@@ -1,21 +1,21 @@
-# Ignore local environment and cache
+# --- IGNORE SECTION (Keep these OUT of Vercel) ---
 venv/
 __pycache__/
-.env
 .dist/
-
-# Ignore heavy training data and local evaluation previews
+.env
 data/
 evaluation/
-
-# Ignore the old heavy PyTorch weights (6GB fix)
 gen.pth
+*.py[cod]
+*.png
+*.jpg
 
-# ENSURE these are tracked and uploaded
+# --- FORCE INCLUDE SECTION (Ensure these are UPLOADED) ---
 !model.onnx
 !model.onnx.data
 !app.py
 !requirements.txt
+!vercel.json
 !templates/
 !static/
 !models/
